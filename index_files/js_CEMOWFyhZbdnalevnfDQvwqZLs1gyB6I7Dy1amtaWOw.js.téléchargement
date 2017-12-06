@@ -1,0 +1,30 @@
+/**
+ * @file
+ * File launch automatically the sending of media to Scene7,
+ * and improve the display of form.
+ */
+(function ($) {
+    Drupal.behaviors.Scene7NodeForm = {
+        attach: function (context, settings) {
+            // Add the same background-color as standard warning messages.
+            var edit_scene7 = $('#edit-scene7');
+            edit_scene7.css('background-color', '#fffce5');
+            $('.fieldset-description', edit_scene7)
+                .not('.appended-text')
+                .addClass('appended-text')
+                .append(' ' + Drupal.t('An automatically sent is launched.'));
+
+            //Hides the submit button that sends the media to Scene7,
+            // and starts automatically.
+            if(edit_scene7.not('ajax-processed')) {
+                $('#edit-send-medias-to-scene7')
+                    .hide()
+                    .mousedown();
+            }
+            else {
+                $('#edit-send-medias-to-scene7').show();
+            }
+        }
+    }
+})(jQuery);
+;

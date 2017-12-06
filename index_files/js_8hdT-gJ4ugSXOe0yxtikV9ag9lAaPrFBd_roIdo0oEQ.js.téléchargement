@@ -1,0 +1,179 @@
+Drupal.locale = { 'pluralFormula': function ($n) { return Number(($n>1)); }, 'strings': {"":{"Edit":"Modifier","Please wait...":"Veuillez patienter...","No results":"Aucun r\u00e9sultat"}} };;
+/**
+ * Created by sylvain on 27/11/15.
+ */
+(function($){
+    $(document).ready(function () {
+        $('.main-menu-loader,.mobile-menu-loader').each(function(){
+            var exculded_url = '/chaumet-menu/preview/';
+            if (window.location.href.match(exculded_url)) {
+                return false;
+            }
+
+            var $link = $(this);
+            var url = $link.attr('href');
+            var locale = $link.data('locale');
+            var id = $link.data('format') + '_'+ locale +'_'+ $link.data('menu-id');
+            var selector = $link.data('selector');
+            var menu_content = null;
+            var expiration_date, now = new Date();
+
+            if(typeof(Storage) !== "undefined") {
+                if (localStorage !== undefined) {
+                    menu_content = JSON.parse(localStorage.getItem(id));
+                    if (menu_content !== null && menu_content !== undefined) {
+                        expiration_date = new Date(menu_content.expiration_date);
+                    }
+                }
+            }
+
+
+            if (menu_content == null || menu_content == undefined || expiration_date < now ) {
+                $.get( url, function (data, textStatus, jqXHR) {
+                    if (data.hasOwnProperty(1) && data[1] !== undefined && selector == data[1].selector) {
+                        var result = data[1];
+
+                        if ($(result.selector).length == 1) {
+                            $(result.selector).html(result.data);
+                            if (localStorage !== undefined) {
+                                var expire = new Date();
+                                expire.setTime(now.getTime() + 10*60000); // cache menu for 10 minutes
+
+                                menu_content = {
+                                    html_content: result.data,
+                                    expiration_date: expire
+                                };
+
+                                localStorage.setItem(id, JSON.stringify(menu_content));
+                            }
+                        }
+                        $(selector).html(menu_content.html_content);
+                        if (Drupal.behaviors.matchMediaHelper.isSmall() && selector == '#mobile-menu-container') {
+                            Drupal.behaviors.MainMenu.initMenuSmall();
+                        } else if (!Drupal.behaviors.matchMediaHelper.isSmall() && selector == '#mega-menu-container') {
+                            Drupal.behaviors.MainMenu.initMenuLarge();
+                        }
+                    }
+                });
+            } else if (menu_content.html_content !== undefined) {
+                $(selector).html(menu_content.html_content);
+                if (Drupal.behaviors.matchMediaHelper.isSmall() && selector == '#mobile-menu-container') {
+                    Drupal.behaviors.MainMenu.initMenuSmall();
+                } else if (!Drupal.behaviors.matchMediaHelper.isSmall() && selector == '#mega-menu-container') {
+                    Drupal.behaviors.MainMenu.initMenuLarge();
+                }
+            }
+
+            if (selector == '#mobile-menu-container') {
+                $('body').on('click', '.menu-mobile__link_trigger_ajax', function (e) {
+                    e.preventDefault();
+                    var $this = $(this);
+
+                    var url = $this.data('href');
+
+                    if (typeof url != undefined) {
+                        $.post(url, function(result){
+                            if (result.hasOwnProperty(1)) {
+                                var command = result[1];
+                                if (command.hasOwnProperty('selector') && command.hasOwnProperty('data')) {
+                                    var container = $(command.selector);
+
+                                    if (container.length > 0) {
+                                        container.replaceWith(command.data);
+                                    }
+                                }
+                            }
+                        });
+
+                    }
+                });
+            }
+
+        });
+    });
+
+})(jQuery);
+
+;
+(function($) {
+    Drupal.behaviors.GeolocateMe = {
+        attach: function (context, settings) {
+            var storeUrl = settings['storeUrl'];
+            var options = {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            };
+
+            function success(pos) {
+                var crd = pos.coords;
+                var url = storeUrl+'/geolocation?lat='+crd.latitude+'&lng='+crd.longitude;
+
+                $('[name="lat"]').val(crd.latitude);
+                $('[name="lng"]').val(crd.longitude);
+                $('#edit-geolocate-store').show();
+                $('#edit-geoloc').hide();
+                window.open(url, '_parent');
+            };
+
+            function error(err) {
+
+            };
+
+            //Since form is ajax loaded it is mandatory to use event delegation for the button to worker
+            //@see http://api.jquery.com/on/#direct-and-delegated-events
+            $(document).on('click', '#edit-geoloc', function() {
+                navigator.geolocation.getCurrentPosition(success, error, options);
+            });
+        }
+    };
+})(jQuery);
+;
+/**
+ * @file
+ * Code to update flag link by an Ajax call.
+ *
+ * The Ajax call is automatically launch when page is ready. We get all
+ * flag links corresponding at selected products of current user.
+ * Then we replace default links "Add to selection", by the links "Remove from
+ * selection" created by Ajax call.
+ */
+(function ($) {
+    Drupal.behaviors.chaumetUserFlagsRefresh = {
+        attach: function (context, settings) {
+
+            $(document).ready(function () {
+                //$('#main2').click(function (event) {
+                //    event.preventDefault();
+                var destination = Drupal.settings.chaumet_user_destination;
+                var entity_id = Drupal.settings.chaumet_user_entity_id;
+                var lang = $('html').attr('lang');
+                var prefix = Drupal.settings.pathPrefix;
+
+                $.ajax({
+                    dataType: "json",
+                    method: 'POST',
+                    url: '/' + prefix + 'chaumet_user_update_flag_ajax/ajax',
+                    data: {
+                        'flag_name': 'select_product',
+                        'destination': destination,
+                        'entity_id': entity_id
+                    },
+                    success: function (jsonData) {
+                        data = JSON.parse(jsonData);
+                        if (entity_id > 0) {
+                            $('.flag-select-product-' + entity_id).replaceWith(data[entity_id]);
+                        }
+                        else {
+                            $.each(data, function (key, val) {
+                                $('.flag-select-product-' + key).replaceWith(val);
+                            });
+                        }
+
+                    }
+                });
+            });
+            //});
+        }
+    }
+})(jQuery);;
