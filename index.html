@@ -6,5 +6,17 @@
   <body>
     <p>Hello <span>web performance</span> students!</p>
     <div><img src="image.jpg"></div>
+	<script>
+	function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+console.log('before');
+wait(7000);  //7 seconds in milliseconds
+console.log('after');
+</script>
   </body>
 </html>
