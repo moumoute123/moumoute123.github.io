@@ -6,17 +6,6 @@
   <body>
     <p>Hello <span>web performance</span> students!</p>
     <div><img src="image.jpg"></div>
-	<script defer>
-	function wait(ms){
-   var start = new Date().getTime();
-   var end = start;
-   while(end < start + ms) {
-     end = new Date().getTime();
-  }
-}
-console.log('before');
-wait(7000);  //7 seconds in milliseconds
-console.log('after');
-</script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   </body>
 </html>
